@@ -20,8 +20,6 @@ class AuthenticatedSessionController extends Controller
         try {
             $request->authenticate();
 
-            $request->session()->regenerate();
-
             $user = Auth::user();
             $token = $user->createToken('auth-token')->plainTextToken;
 

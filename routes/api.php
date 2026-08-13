@@ -24,7 +24,7 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->name('login');
 
 Route::post('/register', [RegisteredUserController::class, 'store'])
-    ->middleware(['guest', 'web'])
+    ->middleware('guest')
     ->name('register');
 
 Route::get('/doctors', [DoctorController::class, 'index']);
@@ -49,4 +49,3 @@ Route::delete('/teleconsultations/{teleconsultation}', [TeleconsultationControll
 Route::patch('/teleconsultations/{teleconsultation}/status', [TeleconsultationController::class, 'updateStatus']);
 
 Route::post('/ask-ai', [AIChatController::class, 'ask']);
-
