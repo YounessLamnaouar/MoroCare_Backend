@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    'allowed_origins' => [env('FRONTEND_URL', 'https://moro-care-frontend.vercel.app')],
 
     'allowed_origins_patterns' => [],
 
@@ -30,5 +30,15 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => true,
+
+    /////
+
+    'domain' => env('SESSION_DOMAIN'),
+
+    'secure' =>  env('SESSION_SECURE_COOKIE', false),
+
+    'http_only' => true,
+
+    'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
 ];
