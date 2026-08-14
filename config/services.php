@@ -2,6 +2,10 @@
 
 return [
 
+    'aimlapi' => [
+        'key' => env('AIMLAPI_API_KEY'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

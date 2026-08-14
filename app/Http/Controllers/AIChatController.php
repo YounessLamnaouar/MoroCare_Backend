@@ -10,7 +10,20 @@ class AIChatController extends Controller
 {
     public function ask(Request $request)
     {
-        $userPrompt = $request->input('question');
+        $request->validate([
+            'question' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $apiKey = config('services.aimlapi.key');
+        if (blank($apiKey)) {
+            Log::error('AIMLAPI_API_KEY is not configured.');
+
+            return response()->json([
+                'message' => 'The AI assistant is not configured yet.',
+            ], 503);
+        }
+
+        $userPrompt = $request->string('question')->trim()->value();
 
         // Simple spelling corrections
         $correctedPrompt = $this->correctSpelling($userPrompt);
@@ -42,14 +55,23 @@ class AIChatController extends Controller
         ];
 
         // Call external AI API
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer 339e81c2982c4a108add49fdd387ac88',
-        ])->post('https://api.aimlapi.com/v1/chat/completions', [
-            'model' => 'mistralai/Mistral-7B-Instruct-v0.2',
-            'messages' => $messages,
-            'temperature' => 0.7,
-            'max_tokens' => 3000,
-        ]);
+        try {
+            $response = Http::acceptJson()
+                ->withToken($apiKey)
+                ->timeout(30)
+                ->post('https://api.aimlapi.com/v1/chat/completions', [
+                    'model' => 'mistralai/Mistral-7B-Instruct-v0.2',
+                    'messages' => $messages,
+                    'temperature' => 0.7,
+                    'max_tokens' => 1000,
+                ]);
+        } catch (\Throwable $exception) {
+            Log::error('AI API connection error.', ['exception' => $exception->getMessage()]);
+
+            return response()->json([
+                'message' => 'The AI service is temporarily unavailable. Please try again later.',
+            ], 503);
+        }
 
         if ($response->failed()) {
             $status = $response->status();
@@ -63,14 +85,14 @@ class AIChatController extends Controller
             // If rate limit or usage limit is reached
             if ($status === 429 || str_contains($body, 'limit')) {
                 return response()->json([
-                    'reply' => 'You have reached the usage limit for the AI assistant. Please try again later.'
+                    'message' => 'The AI assistant has reached its usage limit. Please try again later.',
                 ], 429);
             }
 
             // General fallback error
             return response()->json([
-                'reply' => 'An error occurred while generating the response. Please try again later.'
-            ], 500);
+                'message' => 'The AI service could not generate a response. Please try again later.',
+            ], 502);
         }
 
         $aiReply = $response['choices'][0]['message']['content'] ?? 'Aucune réponse générée.';
