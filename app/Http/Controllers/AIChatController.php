@@ -60,7 +60,7 @@ class AIChatController extends Controller
                 ->withToken($apiKey)
                 ->timeout(30)
                 ->post('https://api.aimlapi.com/v1/chat/completions', [
-                    'model' => 'mistralai/Mistral-7B-Instruct-v0.2',
+                    'model' => config('services.aimlapi.model'),
                     'messages' => $messages,
                     'temperature' => 0.7,
                     'max_tokens' => 1000,
