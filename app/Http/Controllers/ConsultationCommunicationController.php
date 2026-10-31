@@ -38,12 +38,17 @@ class ConsultationCommunicationController extends Controller
         $inWindow = now()->between($start->copy()->subMinutes(15), $start->copy()->addHours(2));
         $url = config('services.video.turn_url');
         $secret = config('services.video.turn_secret');
-        $enabled = $inWindow && filled($url) && filled($secret);
+        // Direct connections are restricted to an explicitly enabled local environment.
+        $local = app()->environment('local') && config('services.video.local_testing')
+            && in_array($request->ip(), ['127.0.0.1', '::1'], true);
+        $relay = filled($url) && filled($secret);
+        $enabled = ($inWindow || $local) && ($relay || $local);
         $username = now()->addHours(2)->timestamp.':'.$request->user()->id;
         return response()->json([
             'enabled' => $enabled,
-            'reason' => ! $inWindow ? 'outside_window' : (! $enabled ? 'video_unconfigured' : null),
-            'iceServers' => $enabled ? [['urls' => $url, 'username' => $username,
+            'iceTransportPolicy' => $local && ! $relay ? 'all' : 'relay',
+            'reason' => ! $inWindow && ! $local ? 'outside_window' : (! $enabled ? 'video_unconfigured' : null),
+            'iceServers' => $enabled && $relay ? [['urls' => $url, 'username' => $username,
                 'credential' => base64_encode(hash_hmac('sha1', $username, $secret, true))]] : [],
             'cursor' => DB::table('consultation_signals')->where('teleconsultation_id', $teleconsultation->id)->max('id') ?? 0,
         ]);
@@ -51,6 +56,7 @@ class ConsultationCommunicationController extends Controller
     public function signals(Request $request, Teleconsultation $teleconsultation)
     {
         $this->participant($request, $teleconsultation, true);
+        abort_unless($this->video($request, $teleconsultation)->getData()->enabled, 403);
         $request->validate(['after' => 'nullable|integer|min:0']);
         $rows = DB::table('consultation_signals')->where('teleconsultation_id', $teleconsultation->id)
             ->where('id', '>', $request->integer('after'))->where('created_at', '>', now()->subMinutes(2))

@@ -52,6 +52,22 @@ class ConsultationSecurityTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']), 'sanctum')->getJson($url.'/signals')->assertForbidden();
         $session->update(['date' => now()->addDays(3)]);
         $this->actingAs(User::find($session->patient_id), 'sanctum')->getJson($url.'/video')->assertOk()->assertJsonPath('enabled', false);
+        $this->getJson($url.'/signals')->assertForbidden();
+    }
+    public function test_local_video_allows_confirmed_consultations_outside_window_only_locally(): void
+    {
+        $session = $this->consultation();
+        $session->update(['date' => now()->subDays(2)]);
+        config(['services.video.local_testing' => true, 'services.video.turn_url' => null, 'services.video.turn_secret' => null]);
+        $this->actingAs(User::find($session->patient_id), 'sanctum');
+        $url = '/api/teleconsultations/'.$session->id.'/video';
+        $this->app->instance('env', 'local');
+        $this->getJson($url)->assertOk()->assertJsonPath('enabled', true)->assertJsonPath('iceTransportPolicy', 'all');
+        $this->app->instance('env', 'production');
+        $this->getJson($url)->assertOk()->assertJsonPath('enabled', false);
+        $this->app->instance('env', 'local');
+        $session->update(['status' => 'Pending']);
+        $this->getJson($url)->assertForbidden();
     }
     public function test_temporary_password_must_be_changed_and_inactive_accounts_cannot_login(): void
     {

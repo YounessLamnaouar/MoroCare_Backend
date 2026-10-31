@@ -2,6 +2,7 @@
 
 return [
     'video' => [
+        'local_testing' => env('VIDEO_LOCAL_TESTING', false),
         'turn_url' => env('TURN_URL'),
         'turn_secret' => env('TURN_SECRET'),
     ],
