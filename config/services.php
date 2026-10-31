@@ -7,10 +7,7 @@ return [
         'turn_secret' => env('TURN_SECRET'),
     ],
 
-    'aimlapi' => [
-        'key' => env('AIMLAPI_API_KEY'),
-        'model' => env('AIMLAPI_MODEL', 'openai/gpt-5-5'),
-    ],
+    'local_ai' => ['model' => env('LOCAL_AI_MODEL', 'gemma3:4b')],
 
     /*
     |--------------------------------------------------------------------------
