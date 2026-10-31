@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 
 class DoctorController extends Controller
 {
-    private const FIELDS = ['id', 'name', 'speciality', 'address', 'phone'];
+    private const FIELDS = ['id', 'name', 'speciality', 'address', 'phone', 'profile_photo'];
     public function index(Request $request)
     {
         $admin = $request->user('sanctum')?->role === 'admin';

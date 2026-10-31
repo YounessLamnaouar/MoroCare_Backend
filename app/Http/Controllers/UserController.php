@@ -13,9 +13,12 @@ class UserController extends Controller
         $user = $request->user();
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
+                'photo' => \App\Services\ProfilePhoto::RULE,
             'phone' => 'sometimes|nullable|string|min:10|max:30',
             'birthday' => 'sometimes|nullable|date|before:today',
         ]);
+        unset($data['photo']);
+        \App\Services\ProfilePhoto::save($request, $user);
         \Illuminate\Support\Facades\DB::transaction(function () use ($user, $data) {
             $user->update($data);
         });

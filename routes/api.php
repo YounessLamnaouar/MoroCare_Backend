@@ -63,3 +63,11 @@ Route::middleware('auth:sanctum')->prefix('teleconsultations/{teleconsultation}'
     Route::get('/signals', [$controller, 'signals'])->middleware('throttle:120,1');
     Route::post('/signals', [$controller, 'signal'])->middleware('throttle:180,1');
 });
+
+// Profile photos are public, like doctor directory photos. UUID paths prevent name guessing.
+Route::get('/profile-photos/{name}', function (string $name) {
+ abort_unless(preg_match('/^[a-f0-9-]{36}\.(jpg|jpeg|png|webp)$/', $name), 404);
+ $disk = \Illuminate\Support\Facades\Storage::disk('local');
+ abort_unless($disk->exists('profile-photos/'.$name), 404);
+ return response()->file($disk->path('profile-photos/'.$name), ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'public, max-age=86400']);
+});

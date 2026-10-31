@@ -26,6 +26,7 @@ class RegisteredUserController extends Controller
             $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
             $request->validate([
                 'name' => ['required', 'string', 'max:255'],
+                'photo' => \App\Services\ProfilePhoto::RULE,
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
                 'password' => ['required', 'confirmed', Rules\Password::min(12)],
                 'role' => 'sometimes|in:user',

@@ -10,6 +10,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    protected $appends = ['photo_url'];
+    public function getPhotoUrlAttribute(): ?string { return $this->profile_photo ? url('/api/profile-photos/'.$this->profile_photo) : null; }
     protected $attributes = ['is_active' => true, 'must_change_password' => false];
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
