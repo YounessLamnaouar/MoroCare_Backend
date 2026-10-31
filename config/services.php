@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'video' => [
+        'turn_url' => env('TURN_URL'),
+        'turn_secret' => env('TURN_SECRET'),
+    ],
 
     'aimlapi' => [
         'key' => env('AIMLAPI_API_KEY'),

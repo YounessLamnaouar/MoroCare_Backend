@@ -26,13 +26,13 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'role' => fake()->randomElement(['user', 'admin', 'doctor']),
+            'role' => 'user',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'phone' => fake()->phoneNumber(),
             'remember_token' => Str::random(10),
             'birthday' => fake()->date('Y-m-d', '-18 years'),
-            'doctor_id' => null,
+
         ];
     }
 

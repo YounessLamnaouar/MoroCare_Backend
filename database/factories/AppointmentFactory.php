@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Appointment;
-use App\Models\Doctor;
+
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,7 +19,7 @@ class AppointmentFactory extends Factory
      */
     public function definition(): array
     {
-        $doctor = \App\Models\Doctor::inRandomOrder()->first() ?? \App\Models\Doctor::factory()->create();
+        $doctor = User::where('role', 'doctor')->inRandomOrder()->first() ?? User::factory()->create(['role' => 'doctor', 'speciality' => 'General']);
         $patient = \App\Models\User::where('role', 'user')->inRandomOrder()->first() ?? \App\Models\User::factory()->create(['role' => 'user']);
         return [
             'patient_id' => $patient->id,

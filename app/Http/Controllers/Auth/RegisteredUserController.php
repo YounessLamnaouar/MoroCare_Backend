@@ -23,12 +23,13 @@ class RegisteredUserController extends Controller
     public function store(Request $request): Response|JsonResponse
     {
         try {
+            $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
             $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-                'password' => ['required', 'confirmed', Rules\Password::defaults()],
-                'role' => 'in:user,admin,doctor',
-                'phone' => 'required|string|min:10',
+                'password' => ['required', 'confirmed', Rules\Password::min(12)],
+                'role' => 'sometimes|in:user',
+                'phone' => 'required|string|min:10|max:30',
                 'birthday' => 'required|date|before:today',
             ]);
 
@@ -36,14 +37,20 @@ class RegisteredUserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->string('password')),
-                'role' => $request->role ?? 'user',
+                'role' => 'user',
                 'phone' => $request->phone,
                 'birthday' => $request->birthday,
             ]);
 
             event(new Registered($user));
 
-            $token = $user->createToken('auth-token')->plainTextToken;
+            if (! $request->is('api/*')) {
+                Auth::login($user);
+                $request->session()->regenerate();
+                return response()->noContent();
+            }
+
+            $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
             return response()->json([
                 'token' => $token,
@@ -55,9 +62,9 @@ class RegisteredUserController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            report($e);
             return response()->json([
                 'message' => 'An error occurred during registration.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }

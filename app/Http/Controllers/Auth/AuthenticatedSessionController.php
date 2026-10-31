@@ -20,8 +20,13 @@ class AuthenticatedSessionController extends Controller
         try {
             $request->authenticate();
 
-            $user = Auth::user();
-            $token = $user->createToken('auth-token')->plainTextToken;
+            if (! $request->is('api/*')) {
+                $request->session()->regenerate();
+                return response()->noContent();
+            }
+
+            $user = Auth::guard('web')->user();
+            $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
             return response()->json([
                 'token' => $token,
@@ -33,9 +38,9 @@ class AuthenticatedSessionController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            report($e);
             return response()->json([
                 'message' => 'An error occurred during authentication.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -45,6 +50,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): Response
     {
+        if ($request->is('api/*')) {
+            $request->user()->currentAccessToken()?->delete();
+            return response()->noContent();
+        }
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

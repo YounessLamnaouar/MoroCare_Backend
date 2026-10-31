@@ -9,6 +9,13 @@ class Teleconsultation extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::creating(function ($consultation) {
+            $consultation->room_id = (string) \Illuminate\Support\Str::uuid();
+        });
+    }
+
     protected $fillable = [
         'patient_id',
         'doctor_id',
@@ -20,8 +27,9 @@ class Teleconsultation extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'time' => 'datetime',
+        'patient_id' => 'integer',
+        'doctor_id' => 'integer',
+        'date' => 'date:Y-m-d',
     ];
 
     public function patient()
@@ -31,6 +39,6 @@ class Teleconsultation extends Model
 
     public function doctor()
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id');
+        return $this->belongsTo(User::class, 'doctor_id')->select(['id', 'name', 'speciality', 'address']);
     }
-} 
+}

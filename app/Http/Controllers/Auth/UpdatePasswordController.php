@@ -20,13 +20,15 @@ class UpdatePasswordController extends Controller
     {
         $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', Rules\Password::min(12)],
         ]);
 
-        $request->user()->update([
-            'password' => Hash::make($request->password),
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $user = $request->user();
+            $user->update(['password' => Hash::make($request->password), 'must_change_password' => false]);
+            $user->tokens()->where('id', '!=', $user->currentAccessToken()?->id)->delete();
+        });
 
         return response()->json(['message' => 'Password updated successfully']);
     }
-} 
+}

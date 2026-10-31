@@ -13,6 +13,9 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        if (! app()->environment(['local', 'testing'])) {
+            throw new \RuntimeException('Sample data may only be seeded locally.');
+        }
         // Create admin user
         User::factory()->create([
             'name' => 'Admin User',
@@ -27,4 +30,4 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
     }
-} 
+}

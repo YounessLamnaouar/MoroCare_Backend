@@ -4,18 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Teleconsultation;
 use Illuminate\Http\Request;
+use App\Services\BookingAccess;
 
 class TeleconsultationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Teleconsultation::with(['patient', 'doctor'])->get();
+        return BookingAccess::query(Teleconsultation::query(), $request->user())->with(['patient:id,name,email,phone', 'doctor'])->get();
     }
 
     public function getUserTeleconsultations(Request $request)
     {
         $user = $request->user();
-        return Teleconsultation::with(['patient', 'doctor'])
+        return Teleconsultation::with(['patient:id,name,email,phone', 'doctor'])
             ->where('patient_id', $user->id)
             ->orderBy('date', 'asc')
             ->orderBy('time', 'asc')
@@ -24,44 +25,48 @@ class TeleconsultationController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'patient_id' => 'required|exists:users,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'date' => 'required|date|after:today',
+            'doctor_id' => 'required|exists:users,id',
+            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'time' => 'required|date_format:H:i',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:2000',
         ]);
 
-        return Teleconsultation::create($request->all());
+        return BookingAccess::create(Teleconsultation::class, $request, $data);
     }
 
     public function show(Teleconsultation $teleconsultation)
     {
-        return Teleconsultation::with(['patient', 'doctor'])->find($teleconsultation->id);
+        BookingAccess::authorize($teleconsultation);
+        return $teleconsultation->load(['patient:id,name,email,phone', 'doctor']);
     }
 
     public function update(Request $request, Teleconsultation $teleconsultation)
     {
-        $request->validate([
+        BookingAccess::authorize($teleconsultation);
+        $data = $request->validate([
             'patient_id' => 'required|exists:users,id',
-            'doctor_id' => 'required|exists:doctors,id',
+            'doctor_id' => 'required|exists:users,id',
             'date' => 'required|date',
             'time' => 'required|date_format:H:i',
             'status' => 'required|in:Pending,Confirmed,Canceled,Completed',
-            'notes' => 'nullable|string',
-            'meeting_link' => 'nullable|string',
+            'notes' => 'nullable|string|max:2000',
         ]);
 
-        $teleconsultation->update($request->all());
+        abort_unless(request()->user()->role === 'admin', 403);
+        BookingAccess::update($teleconsultation, $data);
 
         return response()->json([
             'message' => 'Teleconsultation updated successfully',
-            'teleconsultation' => Teleconsultation::with(['patient', 'doctor'])->find($teleconsultation->id)
+            'teleconsultation' => $teleconsultation->load(['patient:id,name,email,phone', 'doctor'])
         ]);
     }
 
     public function destroy(Teleconsultation $teleconsultation)
     {
+        BookingAccess::authorize($teleconsultation);
+        abort_unless(request()->user()->role === 'admin', 403);
         $teleconsultation->delete();
 
         return response()->json(['message' => 'Teleconsultation deleted']);
@@ -69,15 +74,16 @@ class TeleconsultationController extends Controller
 
     public function updateStatus(Request $request, Teleconsultation $teleconsultation)
     {
-        $request->validate([
+        BookingAccess::authorize($teleconsultation);
+        $data = $request->validate([
             'status' => 'required|in:Pending,Confirmed,Canceled,Completed'
         ]);
 
-        $teleconsultation->update(['status' => $request->status]);
+        BookingAccess::status($teleconsultation, $request->status);
 
         return response()->json([
             'message' => 'Teleconsultation status updated successfully',
-            'teleconsultation' => $teleconsultation->with(['patient', 'doctor'])
+            'teleconsultation' => $teleconsultation->load(['patient:id,name,email,phone', 'doctor'])
         ]);
     }
 

@@ -19,8 +19,7 @@ class Appointment extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'time' => 'datetime',
+        'date' => 'date:Y-m-d',
     ];
 
     public function patient()
@@ -30,6 +29,6 @@ class Appointment extends Model
 
     public function doctor()
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id');
+        return $this->belongsTo(User::class, 'doctor_id')->select(['id', 'name', 'speciality', 'address']);
     }
-} 
+}

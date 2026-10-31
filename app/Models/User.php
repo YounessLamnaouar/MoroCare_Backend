@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    protected $attributes = ['is_active' => true, 'must_change_password' => false];
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -25,6 +26,10 @@ class User extends Authenticatable
         'role',
         'phone',
         'birthday',
+        'speciality',
+        'address',
+        'is_active',
+        'must_change_password',
     ];
 
     /**
@@ -47,13 +52,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
-    public function doctor()
-    {
-        return $this->belongsTo(Doctor::class);
-    }
+
 
 
 }
