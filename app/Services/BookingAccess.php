@@ -34,7 +34,7 @@ class BookingAccess
         }
         return DB::transaction(function () use ($model, $data) {
             self::validateSlot($data);
-            return $model::create($data)->refresh()->load(['patient:id,name,email,phone', 'doctor']);
+            return $model::create($data)->refresh()->load(['patient:id,name,email,phone,profile_photo', 'doctor']);
         });
     }
 

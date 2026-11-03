@@ -29,6 +29,6 @@ class Appointment extends Model
 
     public function doctor()
     {
-        return $this->belongsTo(User::class, 'doctor_id')->select(['id', 'name', 'speciality', 'address']);
+        return $this->belongsTo(User::class, 'doctor_id')->select(['id', 'name', 'speciality', 'address', 'profile_photo']);
     }
 }

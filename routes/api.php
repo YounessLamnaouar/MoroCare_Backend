@@ -71,3 +71,24 @@ Route::get('/profile-photos/{name}', function (string $name) {
  abort_unless($disk->exists('profile-photos/'.$name), 404);
  return response()->file($disk->path('profile-photos/'.$name), ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'public, max-age=86400']);
 });
+
+Route::get('/specialities', fn () => response()->json(config('specialities')));
+
+Route::get('/shop/products', [\App\Http\Controllers\ShopController::class,'products']);
+Route::middleware(['auth:sanctum','role:admin'])->group(function() {
+ Route::post('/shop/products', [\App\Http\Controllers\ShopController::class,'saveProduct']);
+ Route::put('/shop/products/{product}', [\App\Http\Controllers\ShopController::class,'saveProduct']);
+});
+Route::middleware(['auth:sanctum','role:user,admin'])->group(function() {
+ Route::get('/shop/orders', [\App\Http\Controllers\ShopController::class,'orders']);
+ Route::patch('/shop/orders/{order}/status', [\App\Http\Controllers\ShopController::class,'status']);
+});
+Route::post('/shop/orders', [\App\Http\Controllers\ShopController::class,'createOrder'])->middleware(['auth:sanctum','role:user','throttle:10,1']);
+
+Route::post('/shop/quote', [\App\Http\Controllers\ShopController::class,'quote'])->middleware(['auth:sanctum','role:user']);
+
+Route::get('/product-images/{name}', function(string $name) {
+ abort_unless(preg_match('/^[a-f0-9-]{36}\.(jpg|jpeg|png|webp)$/',$name),404);
+ $disk=\Illuminate\Support\Facades\Storage::disk('local');abort_unless($disk->exists('product-images/'.$name),404);
+ return response()->file($disk->path('product-images/'.$name),['X-Content-Type-Options'=>'nosniff','Cache-Control'=>'public, max-age=86400']);
+});

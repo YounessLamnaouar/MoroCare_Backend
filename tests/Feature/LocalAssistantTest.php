@@ -24,7 +24,7 @@ class LocalAssistantTest extends TestCase
     public function test_explicit_urgent_symptoms_do_not_wait_for_model_or_suggest_booking(): void
     {
         Http::fake();
-        $this->actingAs(User::factory()->create(), 'sanctum')->postJson('/api/ask-ai', ['question'=>'I have crushing chest pain and trouble breathing.', 'language'=>'en', 'consent'=>true])->assertOk()->assertJsonPath('urgent', true)->assertJsonPath('doctors', []);
+        $this->actingAs(User::factory()->create(), 'sanctum')->postJson('/api/ask-ai', ['question' => 'I have crushing chest pain and trouble breathing.', 'language' => 'en', 'consent' => true])->assertOk()->assertJsonPath('urgent', true)->assertJsonPath('doctors', []);
         Http::assertNothingSent();
     }
 
@@ -32,5 +32,21 @@ class LocalAssistantTest extends TestCase
     {
         Http::fake(['*' => Http::response(['error' => 'missing model'], 404)]);
         $this->actingAs(User::factory()->create(), 'sanctum')->postJson('/api/ask-ai', ['question' => 'hello', 'language' => 'fr', 'consent' => true])->assertStatus(503)->assertJsonPath('code', 'assistant_offline');
+    }
+
+    public function test_streamed_reply_delivers_tokens_then_completion_and_reports_failures(): void
+    {
+        Http::preventStrayRequests();
+        $lines = json_encode(['message' => ['content' => 'Hello ']])."\n".json_encode(['message' => ['content' => 'there'], 'done' => true])."\n";
+        Http::fake(['*' => Http::response($lines, 200, ['Content-Type' => 'application/x-ndjson'])]);
+        $this->actingAs(User::factory()->create(), 'sanctum');
+        $response = $this->postJson('/api/ask-ai', ['question' => 'Hello', 'language' => 'en', 'consent' => true, 'stream' => true])->assertOk();
+        $events = array_map(fn ($line) => json_decode($line, true), explode("\n", trim($response->streamedContent())));
+        $this->assertSame('Hello ', $events[0]['content']);
+        $this->assertSame('there', $events[1]['content']);
+        $this->assertSame('done', $events[2]['type']);
+        Http::fake(['*' => Http::response(['error' => 'missing model'], 404)]);
+        $error = $this->postJson('/api/ask-ai', ['question' => 'Hello', 'language' => 'en', 'consent' => true, 'stream' => true])->assertOk()->streamedContent();
+        $this->assertStringContainsString('assistant_offline',$error);
     }
 }

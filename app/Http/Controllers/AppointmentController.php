@@ -10,7 +10,7 @@ class AppointmentController extends Controller
 {
     public function index(Request $request)
     {
-        return BookingAccess::query(Appointment::query(), $request->user())->with(['patient:id,name,email,phone', 'doctor'])->get();
+        return BookingAccess::query(Appointment::query(), $request->user())->with(['patient:id,name,email,phone,profile_photo', 'doctor'])->get();
     }
 
     public function store(Request $request)
@@ -29,7 +29,7 @@ class AppointmentController extends Controller
     public function show(Appointment $appointment)
     {
         BookingAccess::authorize($appointment);
-        return $appointment->load(['patient:id,name,email,phone', 'doctor']);
+        return $appointment->load(['patient:id,name,email,phone,profile_photo', 'doctor']);
     }
 
     public function update(Request $request, Appointment $appointment)
@@ -49,7 +49,7 @@ class AppointmentController extends Controller
 
         return response()->json([
             'message' => 'Appointment updated successfully',
-            'appointment' => $appointment->load(['patient:id,name,email,phone', 'doctor'])
+            'appointment' => $appointment->load(['patient:id,name,email,phone,profile_photo', 'doctor'])
         ]);
     }
 
@@ -73,7 +73,7 @@ class AppointmentController extends Controller
 
         return response()->json([
             'message' => 'Appointment status updated successfully',
-            'appointment' => $appointment->load(['patient:id,name,email,phone', 'doctor'])
+            'appointment' => $appointment->load(['patient:id,name,email,phone,profile_photo', 'doctor'])
         ]);
     }
 } 

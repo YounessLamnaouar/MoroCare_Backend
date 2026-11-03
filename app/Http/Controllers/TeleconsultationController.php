@@ -10,13 +10,13 @@ class TeleconsultationController extends Controller
 {
     public function index(Request $request)
     {
-        return BookingAccess::query(Teleconsultation::query(), $request->user())->with(['patient:id,name,email,phone', 'doctor'])->get();
+        return BookingAccess::query(Teleconsultation::query(), $request->user())->with(['patient:id,name,email,phone,profile_photo', 'doctor'])->get();
     }
 
     public function getUserTeleconsultations(Request $request)
     {
         $user = $request->user();
-        return Teleconsultation::with(['patient:id,name,email,phone', 'doctor'])
+        return Teleconsultation::with(['patient:id,name,email,phone,profile_photo', 'doctor'])
             ->where('patient_id', $user->id)
             ->orderBy('date', 'asc')
             ->orderBy('time', 'asc')
@@ -39,7 +39,7 @@ class TeleconsultationController extends Controller
     public function show(Teleconsultation $teleconsultation)
     {
         BookingAccess::authorize($teleconsultation);
-        return $teleconsultation->load(['patient:id,name,email,phone', 'doctor']);
+        return $teleconsultation->load(['patient:id,name,email,phone,profile_photo', 'doctor']);
     }
 
     public function update(Request $request, Teleconsultation $teleconsultation)
@@ -59,7 +59,7 @@ class TeleconsultationController extends Controller
 
         return response()->json([
             'message' => 'Teleconsultation updated successfully',
-            'teleconsultation' => $teleconsultation->load(['patient:id,name,email,phone', 'doctor'])
+            'teleconsultation' => $teleconsultation->load(['patient:id,name,email,phone,profile_photo', 'doctor'])
         ]);
     }
 
@@ -83,7 +83,7 @@ class TeleconsultationController extends Controller
 
         return response()->json([
             'message' => 'Teleconsultation status updated successfully',
-            'teleconsultation' => $teleconsultation->load(['patient:id,name,email,phone', 'doctor'])
+            'teleconsultation' => $teleconsultation->load(['patient:id,name,email,phone,profile_photo', 'doctor'])
         ]);
     }
 
